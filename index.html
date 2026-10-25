@@ -231,8 +231,7 @@ $('#spr').onchange=e=>{const q=PRE[e.target.value];if(!q)return;S.forEach((r,i)=
 // ---------- sound engine: 15 instrument sounds (used by Keyboard, Guitar and the AI) ----------
 // p = oscillator parts {t:type | w:wave, m:freq multiplier, d:detune cents, g:gain, dk/dl:own decay time/level}
 // at/rl = attack/release, dec/sus = amplitude decay to sustain level (piano, guitar, vibes…), cut = low-pass, fe = filter envelope [start×, end×, time]
-// vib = [Hz, cents], tr = [Hz, depth] tremolo, form = formant filters (choir), oct = octave shift in semitones
-const SOUNDS=[
+// vib = [Hz, cents], tr = [Hz, depth] tremolo, form = formant filters (choir), oct = octave shift in semitones  "const SOUNDS=[
 {n:'Acoustic Grand Piano',d:'Traditional, vibrant piano',p:[{w:'pno',g:1},{t:'sine',m:2,g:.15,dk:.6,dl:.1}],at:.003,dec:2.4,sus:.12,cut:4200,fe:[1.6,.55,.8],rl:.28,v:.22},
 {n:'Bright Piano',d:'Clearer, higher-pitched piano',p:[{w:'brt',g:1},{t:'sine',m:3,g:.12,dk:.4,dl:.1}],at:.002,dec:1.9,sus:.1,cut:7000,fe:[1.4,.7,.5],rl:.22,v:.2},
 {n:'Electric Piano',d:'Smooth electronic piano',p:[{t:'sine',g:1},{t:'sine',m:4,g:.22,dk:.5,dl:.05},{t:'sine',m:2,g:.18,d:3}],at:.004,dec:2.6,sus:.25,cut:5000,tr:[4.5,.25],rl:.3,v:.22},
@@ -399,8 +398,7 @@ function quickRec(t){if(!rc){cur=t;$('#rs').value='inst'}$('#rec').click()}
 function fd(g,c,ts,sk){const fi=c.fi||0,fo=c.fo||0;g.gain.setValueAtTime(c.v*(fi&&sk<fi?sk/fi:1),ts);if(fi&&sk<fi)g.gain.linearRampToValueAtTime(c.v,ts+fi-sk);if(fo){const te=ts+c.dur-sk;g.gain.setValueAtTime(c.v,Math.max(ts,te-fo));g.gain.linearRampToValueAtTime(0,te)}}
 // ---------- record / import ----------
 $('#imb').onclick=()=>$('#imp').click();$('#imp').onchange=async e=>{init();hist();add(await ac.decodeAudioData(await e.target.files[0].arrayBuffer()),ph)};
-$('#ig').oninput=e=>ig&&(ig.gain.value=+e.target.value);
-// Recorded clip is placed back by: playback start offset (.06 s) + manual latency + (for mic) device base/output latency
+$('#ig').oninput=e=>ig&&(ig.gain.value=+e.target.value);"// Recorded clip is placed back by: playback start offset (.06 s) + manual latency + (for mic) device base/output latency
 $('#rec').onclick=async()=>{init();if(rc){rc.stop();return}
 try{const mic=$('#rs').value=='mic';let st,tr;if(mic){tr=await navigator.mediaDevices.getUserMedia({audio:{noiseSuppression:true,echoCancellation:false,autoGainControl:false}});const s=ac.createMediaStreamSource(tr),d=ac.createMediaStreamDestination();ig=G();ig.gain.value=$('#ig').value;s.connect(ig);ig.connect(d);ig.connect(an2);st=d.stream}else st=$('#rs').value=='inst'?idest.stream:dest.stream;
 const ch=[],s0=ph,dv=mic?(ac.baseLatency||0)+(ac.outputLatency||0):0;rc=new MediaRecorder(st);rc.ondataavailable=e=>ch.push(e.data);rc.onstop=async()=>{rc=null;stop();setRec(0);if(tr)tr.getTracks().forEach(t=>t.stop());hist();add(await ac.decodeAudioData(await new Blob(ch).arrayBuffer()),Math.max(0,s0-.06-dv-$('#lat').value/1000));toast('✔ Saved to '+T[cur].n+' track')};rc.start();setRec(1);play()}catch(e){alert('Mic: '+e.message)}};
@@ -760,8 +758,7 @@ if(cu){const cm=med(cu.m.slice(-10));let sp=false;
 if(Math.abs(m-cm)>.7&&Math.abs(mm[f+1]-m)<.6&&Math.abs(mm[f+2]-m)<.6)sp=true;
 else if(cu.fr.length>=8&&P.rms[f]>P.gate*2&&P.rms[f]>1.8*Math.min(P.rms[f-1],P.rms[f-2],P.rms[f-3]))sp=true;
 if(sp)fin()}
-if(!cu)cu={fr:[],m:[]};cu.fr.push(f);cu.m.push(m)}
-fin();
+if(!cu)cu={fr:[],m:[]};cu.fr.push(f);cu.m.push(m)}"fin();
 if(!raw.length){lg('No stable notes detected');return}
 let prevE=0;const notes=raw.map(c=>{const f0=c.fr[0],f1=c.fr[c.fr.length-1],st=onset(v.x,Math.max(prevE,(f0-1)*HOP),f0*HOP+W);let en=f1*HOP+W*.75;if(en-st<SR*.06)en=st+SR*.06;
 const pk=Math.max(...c.fr.map(f=>P.rms[f]));prevE=f1*HOP+HOP;
@@ -780,4 +777,73 @@ const melTone=(X,o,nn,S,vol)=>{const h=tone(X.oc,X.mg,o.s,nn,.5+.5*o.vel,S,{tn:T
 h.os.forEach(x=>x.detune.setValueAtTime(x.__d,o.s));h.fg.gain.setValueAtTime(1,o.s);let last=o.s+Math.max(.01,S.at);
 o.bf.forEach(([tf,dev,ga])=>{if(tf<=last+.004||tf>=o.e-.01)return;last=tf;if(fol>0)h.os.forEach(x=>x.detune.linearRampToValueAtTime(x.__d+dev*100*fol,tf));if(!S.dec)h.fg.gain.linearRampToValueAtTime(ga,tf)});
 h.end(o.e)};
-// list 
+// list = [[sound, octave shift, volume 0..1], …] — Upper 1 / Upper 2 exactly as set on the keyboard
+const synth=(X,list,lo,hi)=>notes.forEach(o=>{let nn=o.n;while(nn<lo)nn+=12;while(nn>hi)nn-=12;
+list.forEach(([S,oc2,vl])=>{melTone(X,o,nn+oc2*12,S,vl);if(har)melTone(X,o,nn+oc2*12+(inS(nn+4)?4:inS(nn+3)?3:4),S,vl*.5)});
+if(!list[0][0].nosub)melTone(X,o,nn>=48?nn-12:nn,SUBS,1)});
+// ---- ribbon: continuous glide on the exact pitch curve, ↕ filter follows loudness ----
+const ribbon=X=>{const oc=X.oc,os=oc.createOscillator(),f=oc.createBiquadFilter(),g=oc.createGain(),snp=$('#mf-s').checked,fq=m=>440*2**((m-69+12)/12),
+gE=fr=>.16*cl(P.rms[fr]/P.p95,.2,1.1),fE=fr=>cl(700+5500*cl(P.rms[fr]/P.p95,0,1),300,9000);
+os.type='sawtooth';f.type='lowpass';f.Q.value=2;g.gain.value=0;os.frequency.value=220;os.connect(f);f.connect(g);g.connect(X.mg);os.start(0);os.stop(v.dur+1.8);
+notes.forEach(n=>{const m0=mm[n.fr[0]]+tun/100;os.frequency.setTargetAtTime(fq(snp?Math.round(m0):m0),Math.max(0,n.s-.004),.004);g.gain.setTargetAtTime(gE(n.fr[0]),n.s,.006);f.frequency.setTargetAtTime(fE(n.fr[0]),n.s,.01);
+for(let k=0;k<n.fr.length;k+=2){const fr=n.fr[k],tf=(fr*HOP+W/2)/SR;if(tf<=n.s+.004||tf>=n.e-.01)continue;const m=mm[fr]+tun/100;os.frequency.setTargetAtTime(fq(snp?Math.round(m):m),tf,.01);g.gain.setTargetAtTime(gE(fr),tf,.012);f.frequency.setTargetAtTime(fE(fr),tf,.02)}
+g.gain.setTargetAtTime(0,n.e,.025)})};
+// ---- drum pad (hits on the exact onsets) + DJ (risers before phrases, scratches after) ----
+const perc=X=>{const oc=X.oc,nz=mkNoise(oc),
+dh=(i,t,vv)=>{t=Math.max(0,t);const[,ty,f]=DR[i],g2=oc.createGain();g2.connect(X.mg);
+if('ktz'.includes(ty)){const os=oc.createOscillator();os.frequency.setValueAtTime(f,t);os.frequency.exponentialRampToValueAtTime(f/3,t+.15);env(g2,t,.002,ty=='k'?.4:.25,vv);os.connect(g2);os.start(t);os.stop(t+.6)}
+else{const s=oc.createBufferSource(),q=oc.createBiquadFilter();q.type=ty=='s'?'bandpass':'highpass';q.frequency.value=f;s.buffer=nz;s.connect(q);q.connect(g2);env(g2,t,.002,ty=='h'?.05:ty=='o'?.35:.18,vv);s.start(t);s.stop(t+.5)}};
+notes.forEach((o,i)=>{const gb=o.s-(i?notes[i-1].e:-9),ga=(notes[i+1]?notes[i+1].s:1e9)-o.e,vv=cl(.35+.65*o.vel,.1,1);
+if(use.d){if(gb>.5){dh(13,o.s,.5*vv);dh(0,o.s,vv)}else if(o.n<f0m-1)dh(0,o.s,vv);else if(o.vel>.8)dh(1,o.s,vv*.9);
+dh(2,o.s,.35*vv);if(o.e-o.s>.5)dh(5,o.s,.25*vv);if(ga>.5)dh(4,Math.max(o.s,o.e-.12),.6*vv)}
+if(use.j){if(gb>.8&&o.s>.65){const s=oc.createBufferSource(),q=oc.createBiquadFilter(),g3=oc.createGain();s.buffer=nz;s.loop=true;q.type='highpass';q.frequency.setValueAtTime(500,o.s-.6);q.frequency.exponentialRampToValueAtTime(8000,o.s);
+g3.gain.setValueAtTime(.0001,o.s-.6);g3.gain.exponentialRampToValueAtTime(.2,o.s-.005);g3.gain.setValueAtTime(0,o.s);s.connect(q);q.connect(g3);g3.connect(X.mg);s.start(o.s-.6);s.stop(o.s)}
+if(ga>.5){const t=o.e+.03,os=oc.createOscillator(),q=oc.createBiquadFilter(),g4=oc.createGain();os.type='sawtooth';q.type='bandpass';q.frequency.value=1500;q.Q.value=4;
+for(let k=0;k<10;k++)os.frequency.setValueAtTime(k%2?160+Math.random()*60:420+Math.random()*200,t+k*.022);env(g4,t,.004,.24,.18);os.connect(q);q.connect(g4);g4.connect(X.mg);os.start(t);os.stop(t+.26)}}})};
+// ---- build + render + place ----
+const jobs=[];
+if(use.k||use.r){const X=mk();if(use.k)synth(X,[[SOUNDS[SEL.k],KS.o1,KS.v1/100]].concat(SEL.k2>=0?[[SOUNDS[SEL.k2],KS.o2,KS.v2/100]]:[]),55,88);if(use.r)ribbon(X);jobs.push([2,X,.7])}
+if(use.g){const X=mk();synth(X,[[SOUNDS[SEL.g],0,1]],52,79);jobs.push([1,X,.7])}
+if(use.d||use.j){const X=mk();perc(X);jobs.push([3,X,.8])}
+hist();const old=cur;
+for(let i=0;i<jobs.length;i++){const[ti,X,lvl]=jobs[i];pg(.75+.2*i/jobs.length);const buf=await X.oc.startRendering();
+let pkv=0;for(let c=0;c<buf.numberOfChannels;c++){const d=buf.getChannelData(c);for(let j=0;j<d.length;j+=2)pkv=Math.max(pkv,Math.abs(d[j]))}
+const kk=pkv?lvl/pkv:1;for(let c=0;c<buf.numberOfChannels;c++){const d=buf.getChannelData(c);for(let j=0;j<d.length;j++)d[j]*=kk}
+T[ti].c=T[ti].c.filter(c=>!c.ai);cur=ti;add(buf,v.t0);const c=T[ti].c[T[ti].c.length-1];c.ai=1}
+cur=old;sel=null;tbr();draw();
+// ---- dynamic effects: signals sampled every 50 ms ----
+const nD=Math.ceil(v.dur/DT)+2,E=new Float32Array(nD),Gp=new Float32Array(nD),Pp=new Float32Array(nD);let ni=-1,ee=0;
+for(let k=0;k<nD;k++){const tt=k*DT,f=Math.min(nf-1,Math.floor(tt*SR/HOP));ee=ee*.6+cl(P.rms[f]/P.p95,0,1.2)*.4;E[k]=ee;
+while(ni+1<notes.length&&notes[ni+1].s<=tt)ni++;
+if(ni<0){Gp[k]=0;Pp[k]=.5}else{const o=notes[ni];Pp[k]=cl((o.n-48)/36,0,1);Gp[k]=tt<=o.e?0:cl(1-(tt-o.e)/1.2,0,1)}}
+DYN={on:use.f,t0:v.t0,dt:DT,n:nD,e:E,g:Gp,p:Pp};
+const nm=n=>PN[((n%12)+12)%12]+(Math.floor(n/12)-1);
+$('#ai-rp').innerHTML=`<div class="kv"><span>Notes <b>${notes.length}</b></span><span>Key <b>${PN[K.r]}${K.m?' minor':' major'}</b></span><span>Tuning <b>${tun>0?'+':''}${tun.toFixed(0)}</b> ¢</span><span>Range <b>${nm(Math.min(...notes.map(o=>o.n)))}–${nm(Math.max(...notes.map(o=>o.n)))}</b></span><span>Tone <b>${Math.round(cut)}</b> Hz</span></div><div class="kv">${[['Keys · '+(SEL?SOUNDS[SEL.k].n+(SEL.k2>=0?' + '+SOUNDS[SEL.k2].n:''):''),use.k],['Guitar · '+(SEL?SOUNDS[SEL.g].n:''),use.g],['Drum pad',use.d],['Ribbon',use.r],['DJ',use.j],['Effects',use.f]].filter(a=>a[1]).map(a=>`<span><b>✔</b> ${a[0]}</span>`).join('')}</div>`+notes.slice(0,32).map(o=>`<span class="chp">${nm(o.n)}</span>`).join('');
+lg(`Instruments follow voice: ${notes.length} notes · ${PN[K.r]}${K.m?'m':''} · tuning ${tun.toFixed(0)}¢ · first onset ${notes[0].s.toFixed(3)} s`)}
+
+/* ---- dynamic effects engine: modulates the effects you already have, per moment ---- */
+// [effect index, signal, base, depth] → value = slider × (base + depth × signal)
+const MOD=[[2,'g',.5,1.2],[3,'g',.3,1.6],[11,'e',.6,.8],[18,'p',.6,.8],[9,'p',.6,.8],[24,'e',.7,.6]];
+function dynApply(r,t){if(!DYN||!DYN.on)return;const k=cl(Math.floor((t-DYN.t0)/DYN.dt),0,DYN.n-1);
+MOD.forEach(([i,s,a,b])=>{const e=r.fx[i];if(e&&e.s&&FV.fx[i]>0)e.s(cl(FV.fx[i]*(a+b*DYN[s][k]),0,1))})}
+{const _build=build;build=function(act){const r=_build(act);
+if(OFF&&act&&DYN&&DYN.on&&typeof OfflineAudioContext!='undefined'&&ac instanceof OfflineAudioContext){const oc=ac,end=oc.length/oc.sampleRate-.3;
+for(let t=.1;t<end;t+=.1){try{oc.suspend(t).then(()=>{dynApply(r,t);oc.resume()}).catch(()=>{})}catch(e){}}}
+return r}}
+{let dirty=0;setInterval(()=>{if(!R)return;if(playing&&DYN&&DYN.on){dynApply(R,ph);dirty=1}else if(dirty){dirty=0;applyAll(R)}},40)}
+
+/* ---- buttons ---- */
+let busy2=0;
+async function go(fn){if(busy2)return;busy2=1;const bs=q$('#p-ai button:not(.ic)');bs.forEach(b=>b.disabled=1);try{init();await fn()}catch(e){console.error(e);lg('⚠ '+e.message)}finally{busy2=0;bs.forEach(b=>b.disabled=0);pg(0)}}
+const fk=async()=>{await follow();if($('#ai-x').checked)await $('#ai-mx').onclick();if($('#ai-f').checked&&$('#mf-f').checked)await $('#ai-fx').onclick()};
+$('#mf-go').onclick=()=>go(async()=>{await fk();toast('✔ All instruments follow your voice — press ▶ Play result')});
+$('#ai-ke').onclick=()=>go(async()=>{await fk();toast('✔ Instruments follow your voice')});
+$('#ai-go').onclick=()=>go(async()=>{
+if($('#ai-d').checked&&!($('#mf-d').checked&&$('#ai-k').checked))await $('#ai-dr').onclick();
+if($('#ai-k').checked)await follow();
+if($('#ai-x').checked)await $('#ai-mx').onclick();
+if($('#ai-f').checked)await $('#ai-fx').onclick();
+if($('#ai-j').checked)await $('#ai-dj').onclick();
+pg(1);ph=0;draw();toast('✔ AI finished — press ▶ Play result')});
+})();
+</script></body></html>
