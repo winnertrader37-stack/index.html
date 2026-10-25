@@ -2,6 +2,8 @@
 <html lang="om"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
 <title>Naol Studio</title>
+<script>window.addEventListener('error',function(e){var d=document.getElementById('errbox');if(!d){d=document.createElement('pre');d.id='errbox';d.style.cssText='position:fixed;left:0;right:0;bottom:0;max-height:45%;overflow:auto;background:#5a0000;color:#fff;font:11px monospace;padding:8px;z-index:99999;white-space:pre-wrap;user-select:text;-webkit-user-select:text';(document.body||document.documentElement).appendChild(d)}d.textContent+=(e.message||'error')+'  [line '+(e.lineno||'?')+':'+(e.colno||'?')+']\n'});window.addEventListener('unhandledrejection',function(e){var d=document.getElementById('errbox');if(d)d.textContent+='Promise: '+(e.reason&&e.reason.message||e.reason)+'\n'});</script>
+
 <style>
 :root{--bg:#121212;--p2:#2a2a2d;--a:#00d1e0;--m:#8b8b90}
 *{box-sizing:border-box;margin:0;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}
@@ -131,8 +133,9 @@ svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.7;stroke
 <div class="pn s" id="p-clip" data-t="Clip options"><label>Volume <input type="range" id="cvv" min="0" max="2" step=".05" value="1"></label><label>Fade in <input type="range" id="cfi" min="0" max="3" step=".1" value="0"></label><label>Fade out <input type="range" id="cfo" min="0" max="3" step=".1" value="0"></label><div class="row"><button id="crv">⇄ Reverse</button></div></div>
 </div>
 <div id="tr"><button class="ic" id="fs"></button><button class="ic" id="pl"></button><span style="display:flex"><button class="ic" id="un"></button><button class="ic" id="re"></button></span></div>
-<canvas id="tl"></canvas><div id="tb"></div><div id="toast"></div>
+<div id="ver" style="position:fixed;left:4px;bottom:2px;font:9px monospace;color:#8b8b90;z-index:9999;pointer-events:none">v3 · JS:<span id="verjs">OFF</span></div><canvas id="tl"></canvas><div id="tb"></div><div id="toast"></div>
 <script>
+document.getElementById("verjs").textContent="OK";
 const $=s=>document.querySelector(s),N=n=>440*2**((n-69)/12);
 let idest,ac,R,dest,an,an2,nb,OFF=0,ig,rc=null,mi,sel=null,cur=0,playing=false,srcs=[],t0=0,zoom=50,ph=0,ps=0;
 const T=['Vocal','Guitar','Keys','Drums'].map(n=>({n,c:[],vol:1,pan:0,mu:0,so:0}));
@@ -781,9 +784,4 @@ const synth=(X,list,lo,hi)=>notes.forEach(o=>{let nn=o.n;while(nn<lo)nn+=12;whil
 list.forEach(([S,oc2,vl])=>{melTone(X,o,nn+oc2*12,S,vl);if(har)melTone(X,o,nn+oc2*12+(inS(nn+4)?4:inS(nn+3)?3:4),S,vl*.5)});
 if(!list[0][0].nosub)melTone(X,o,nn>=48?nn-12:nn,SUBS,1)});
 // ---- ribbon: continuous glide on the exact pitch curve, ↕ filter follows loudness ----
-const ribbon=X=>{const oc=X.oc,os=oc.createOscillator(),f=oc.createBiquadFilter(),g=oc.createGain(),snp=$('#mf-s').checked,fq=m=>440*2**((m-69+12)/12),
-gE=fr=>.16*cl(P.rms[fr]/P.p95,.2,1.1),fE=fr=>cl(700+5500*cl(P.rms[fr]/P.p95,0,1),300,9000);
-os.type='sawtooth';f.type='lowpass';f.Q.value=2;g.gain.value=0;os.frequency.value=220;os.connect(f);f.connect(g);g.connect(X.mg);os.start(0);os.stop(v.dur+1.8);
-notes.forEach(n=>{const m0=mm[n.fr[0]]+tun/100;os.frequency.setTargetAtTime(fq(snp?Math.round(m0):m0),Math.max(0,n.s-.004),.004);g.gain.setTargetAtTime(gE(n.fr[0]),n.s,.006);f.frequency.setTargetAtTime(fE(n.fr[0]),n.s,.01);
-for(let k=0;k<n.fr.length;k+=2){const fr=n.fr[k],tf=(fr*HOP+W/2)/SR;if(tf<=n.s+.004||tf>=n.e-.01)continue;const m=mm[fr]+tun/100;os.frequency.setTargetAtTime(fq(snp?Math.round(m):m),tf,.01);g.gain.setTargetAtTime(gE(fr),tf,.012);f.frequency.setTargetAtTime(fE(fr),tf,.02)}
-g.gain.setTargetAtTime(0,n
+const ribb
